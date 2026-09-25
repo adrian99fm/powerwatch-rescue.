@@ -1,0 +1,90 @@
+name: Build PowerWatch Rescue APK v3
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'PowerWatchRescue*.zip'
+      - '.github/workflows/build-apk-v3.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Unpack source
+        shell: bash
+        run: |
+          set -euo pipefail
+          ZIP="$(find . -maxdepth 1 -type f -iname 'PowerWatchRescue*.zip' | head -n 1)"
+          test -n "$ZIP"
+          echo "Using $ZIP"
+          rm -rf PowerWatchRescue-audited
+          unzip -q "$ZIP"
+          test -f PowerWatchRescue-audited/settings.gradle
+          test -f PowerWatchRescue-audited/app/build.gradle
+
+      - name: Use preinstalled JDK and Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "${JAVA_HOME_17_X64:-}" ]; then
+            echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+            echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+          fi
+          java -version
+          echo "ANDROID_HOME=${ANDROID_HOME:-}"
+          SDKROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          SDKMANAGER="$(find "$SDKROOT/cmdline-tools" -type f -name sdkmanager 2>/dev/null | sort | tail -n 1)"
+          test -n "$SDKMANAGER"
+          echo "SDKMANAGER=$SDKMANAGER" >> "$GITHUB_ENV"
+          "$SDKMANAGER" --version
+
+      - name: Ensure Android 35 tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Download Gradle 8.7
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 \
+            https://services.gradle.org/distributions/gradle-8.7-bin.zip \
+            -o /tmp/gradle-8.7-bin.zip
+          rm -rf /tmp/gradle-8.7
+          unzip -q /tmp/gradle-8.7-bin.zip -d /tmp
+          /tmp/gradle-8.7/bin/gradle --version
+
+      - name: Build APK
+        shell: bash
+        working-directory: PowerWatchRescue-audited
+        run: |
+          set -euo pipefail
+          /tmp/gradle-8.7/bin/gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Publish APK to repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="PowerWatchRescue-audited/app/build/outputs/apk/debug/app-debug.apk"
+          test -f "$APK"
+          cp "$APK" PowerWatchRescue-debug.apk
+          sha256sum PowerWatchRescue-debug.apk > PowerWatchRescue-debug.apk.sha256
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add PowerWatchRescue-debug.apk PowerWatchRescue-debug.apk.sha256
+          if ! git diff --cached --quiet; then
+            git commit -m "Build PowerWatch Rescue APK"
+            git push
+          fi
