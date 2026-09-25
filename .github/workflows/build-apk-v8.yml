@@ -1,0 +1,92 @@
+name: Build PowerWatch Rescue APK v8
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/build-apk-v8.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Unpack source
+        shell: bash
+        run: |
+          set -euo pipefail
+          ZIP="$(find . -maxdepth 1 -type f -iname 'PowerWatchRescue*.zip' | head -n 1)"
+          test -n "$ZIP"
+          echo "Using $ZIP"
+          rm -rf PowerWatchRescue-audited
+          unzip -q "$ZIP"
+          test -f PowerWatchRescue-audited/settings.gradle
+          test -f PowerWatchRescue-audited/app/build.gradle
+
+      - name: Apply v8 protocol flow
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCnAgPSBQYXRoKCdQb3dlcldhdGNoUmVzY3VlLWF1ZGl0ZWQvYXBwL3NyYy9tYWluL2phdmEvb3JnL29wZW5wb3dlcndhdGNoL3N5bmMvTWFpbkFjdGl2aXR5LmphdmEnKQpzID0gcC5yZWFkX3RleHQoKQoKcmVwbHMgPSBbCiAgICAoJyAgICAgICAgICAgIHN5bmNRdWV1ZS5hZGQodGltZVBheWxvYWQoKSk7IHN5bmNMYWJlbHMuYWRkKCJUSU1FIik7JywKICAgICAnICAgICAgICAgICAgc3luY1F1ZXVlLmFkZChuZXcgYnl0ZVswXSk7IHN5bmNMYWJlbHMuYWRkKCJUSU1FIik7JyksCiAgICAoJyAgICAgICAgcGVuZGluZ1NlcmlhbCA9IHR4U2VyaWFsICYgMHgwRjsnLAogICAgICcnJyAgICAgICAgLy8gQnVpbGQgVElNRSBpbW1lZGlhdGVseSBiZWZvcmUgQkxFIHdyaXRlIHNvIGl0IGNhbm5vdCBnbyBzdGFsZSBkdXJpbmcgY29ubmVjdGlvbiBzZXR1cC5cbiAgICAgICAgaWYgKCJUSU1FIi5lcXVhbHMobGFiZWwpKSByYXcgPSB0aW1lUGF5bG9hZCgpO1xuXG4gICAgICAgIC8vIFRoaXMgUG93ZXJXYXRjaCBmaXJtd2FyZSBBQ0tzIGNvbW1hbmQgREFUQSB3aXRoIHNlcmlhbCAwLlxuICAgICAgICBwZW5kaW5nU2VyaWFsID0gMDsnJycpLAogICAgKCcgICAgICAgICAgICAgICAgdHhTZXJpYWwgPSAodHhTZXJpYWwgKyAxKSAmIDB4MEY7XG4nLCAnJykKXQpmb3Igb2xkLCBuZXcgaW4gcmVwbHM6CiAgICBpZiBvbGQgbm90IGluIHM6CiAgICAgICAgcmFpc2UgU3lzdGVtRXhpdCgnTWlzc2luZyBiYXNlIHBhdGNoIHBhdHRlcm46ICcgKyBvbGRbOjYwXSkKICAgIHMgPSBzLnJlcGxhY2Uob2xkLCBuZXcsIDEpCgpvbGQgPSAnICAgIHByaXZhdGUgYm9vbGVhbiB0ZXN0RGF0YVJlY2VpdmVkO1xuICAgIHByaXZhdGUgaW50IHR4U2VyaWFsOycKbmV3ID0gJycnICAgIHByaXZhdGUgYm9vbGVhbiB0ZXN0RGF0YVJlY2VpdmVkO1xuICAgIHByaXZhdGUgYm9vbGVhbiBzeW5jSW5pdEFja09rO1xuICAgIHByaXZhdGUgYm9vbGVhbiBzeW5jSW5pdERhdGFSZWNlaXZlZDtcbiAgICBwcml2YXRlIGludCB0eFNlcmlhbDsnJycKaWYgb2xkIG5vdCBpbiBzOiByYWlzZSBTeXN0ZW1FeGl0KCdNaXNzaW5nIGZpZWxkcyBwYXR0ZXJuJykKcyA9IHMucmVwbGFjZShvbGQsIG5ldywgMSkKCm9sZCA9ICcnJyAgICAgICAgdGVzdEFja09rID0gZmFsc2U7XG4gICAgICAgIHRlc3REYXRhUmVjZWl2ZWQgPSBmYWxzZTtcbiAgICAgICAgc3luY1F1ZXVlLmNsZWFyKCk7JycnCm5ldyA9ICcnJyAgICAgICAgdGVzdEFja09rID0gZmFsc2U7XG4gICAgICAgIHRlc3REYXRhUmVjZWl2ZWQgPSBmYWxzZTtcbiAgICAgICAgc3luY0luaXRBY2tPayA9IGZhbHNlO1xuICAgICAgICBzeW5jSW5pdERhdGFSZWNlaXZlZCA9IGZhbHNlO1xuICAgICAgICBzeW5jUXVldWUuY2xlYXIoKTsnJycKaWYgb2xkIG5vdCBpbiBzOiByYWlzZSBTeXN0ZW1FeGl0KCdNaXNzaW5nIHJlc2V0IHBhdHRlcm4nKQpzID0gcy5yZXBsYWNlKG9sZCwgbmV3LCAxKQoKb2xkID0gJycnICAgICAgICBpZiAocmVxdWVzdFN5bmMpIHtcbiAgICAgICAgICAgIHN5bmNRdWV1ZS5hZGQobmV3IGJ5dGVbMF0pOyBzeW5jTGFiZWxzLmFkZCgiVElNRSIpO1xuICAgICAgICAgICAgc3luY1F1ZXVlLmFkZChuZXcgYnl0ZVtdIHsoYnl0ZSkgMHg4NCwgMHgyMX0pOyBzeW5jTGFiZWxzLmFkZCgiU0FWRSIpOycnJwpuZXcgPSAnJycgICAgICAgIGlmIChyZXF1ZXN0U3luYykge1xuICAgICAgICAgICAgLy8gRG9jdW1lbnRlZCBzdWNjZXNzZnVsIGZsb3cgc3RhcnRzIHdpdGggcXVlcnkvaW5pdCBpbiB0aGUgU0FNRSBCTEUgc2Vzc2lvbi5cbiAgICAgICAgICAgIHN5bmNRdWV1ZS5hZGQobmV3IGJ5dGVbXSB7KGJ5dGUpIDB4ODQsIDB4MTB9KTsgc3luY0xhYmVscy5hZGQoIklOSVQiKTtcbiAgICAgICAgICAgIHN5bmNRdWV1ZS5hZGQobmV3IGJ5dGVbMF0pOyBzeW5jTGFiZWxzLmFkZCgiVElNRSIpO1xuICAgICAgICAgICAgc3luY1F1ZXVlLmFkZChuZXcgYnl0ZVtdIHsoYnl0ZSkgMHg4NCwgMHgyMX0pOyBzeW5jTGFiZWxzLmFkZCgiU0FWRSIpOycnJwppZiBvbGQgbm90IGluIHM6IHJhaXNlIFN5c3RlbUV4aXQoJ01pc3NpbmcgcXVldWUgcGF0dGVybicpCnMgPSBzLnJlcGxhY2Uob2xkLCBuZXcsIDEpCgpvbGQgPSAnJycgICAgICAgICAgICAgICAgaWYgKCJURVNUIi5lcXVhbHMocGVuZGluZ0xhYmVsKSkge1xuICAgICAgICAgICAgICAgICAgICB0ZXN0QWNrT2sgPSB0cnVlOycnJwpuZXcgPSAnJycgICAgICAgICAgICAgICAgaWYgKCJJTklUIi5lcXVhbHMocGVuZGluZ0xhYmVsKSkge1xuICAgICAgICAgICAgICAgICAgICBzeW5jSW5pdEFja09rID0gdHJ1ZTtcbiAgICAgICAgICAgICAgICAgICAgbG9nKCJJTklUIDg0MTAgYSBwcmltaXQgQUNLIFNVQ0NFU1M7IGHImXRlcHQgcsSDc3B1bnMgREFUQSDDrm4gYWNlZWHImWkgY29uZXhpdW5lLiIpO1xuICAgICAgICAgICAgICAgICAgICBtYXliZUNvbnRpbnVlU3luY0luaXQoKTtcbiAgICAgICAgICAgICAgICAgICAgZmluYWwgaW50IGluaXRHZW4gPSBjb21tYW5kR2VuZXJhdGlvbjtcbiAgICAgICAgICAgICAgICAgICAgaGFuZGxlci5wb3N0RGVsYXllZCgoKSAtPiB7XG4gICAgICAgICAgICAgICAgICAgICAgICBpZiAoc3luY1J1bm5pbmcgJiYgc3luY0luaXRBY2tPayAmJiAhc3luY0luaXREYXRhUmVjZWl2ZWQgJiYgaW5pdEdlbiA9PSBjb21tYW5kR2VuZXJhdGlvbikge1xuICAgICAgICAgICAgICAgICAgICAgICAgICAgIGZhaWwoIklOSVQgODQxMCBhIHByaW1pdCBBQ0ssIGRhciBudSBhIHZlbml0IHLEg3NwdW5zIERBVEEgcGUgMDAxMi4iKTtcbiAgICAgICAgICAgICAgICAgICAgICAgIH1cbiAgICAgICAgICAgICAgICAgICAgfSwgMjUwMCk7XG4gICAgICAgICAgICAgICAgICAgIHJldHVybjtcbiAgICAgICAgICAgICAgICB9XG4gICAgICAgICAgICAgICAgaWYgKCJURVNUIi5lcXVhbHMocGVuZGluZ0xhYmVsKSkge1xuICAgICAgICAgICAgICAgICAgICB0ZXN0QWNrT2sgPSB0cnVlOycnJwppZiBvbGQgbm90IGluIHM6IHJhaXNlIFN5c3RlbUV4aXQoJ01pc3NpbmcgQUNLIFRFU1QgcGF0dGVybicpCnMgPSBzLnJlcGxhY2Uob2xkLCBuZXcsIDEpCgpvbGQgPSAnJycgICAgICAgICAgICBpZiAoIlRFU1QiLmVxdWFscyhwZW5kaW5nTGFiZWwpICYmIGRhdGFMZW4gPiAwKSB7XG4gICAgICAgICAgICAgICAgdGVzdERhdGFSZWNlaXZlZCA9IHRydWU7JycnCm5ldyA9ICcnJyAgICAgICAgICAgIGlmICgiSU5JVCIuZXF1YWxzKHBlbmRpbmdMYWJlbCkgJiYgZGF0YUxlbiA+IDApIHtcbiAgICAgICAgICAgICAgICBzeW5jSW5pdERhdGFSZWNlaXZlZCA9IHRydWU7XG4gICAgICAgICAgICAgICAgbG9nKCJSxINzcHVucyBEQVRBIHByaW1pdCBwZW50cnUgSU5JVCA4NDEwIMOubiBhY2VlYciZaSBjb25leGl1bmUuIik7XG4gICAgICAgICAgICAgICAgbWF5YmVDb250aW51ZVN5bmNJbml0KCk7XG4gICAgICAgICAgICAgICAgcmV0dXJuO1xuICAgICAgICAgICAgfVxuICAgICAgICAgICAgaWYgKCJURVNUIi5lcXVhbHMocGVuZGluZ0xhYmVsKSAmJiBkYXRhTGVuID4gMCkge1xuICAgICAgICAgICAgICAgIHRlc3REYXRhUmVjZWl2ZWQgPSB0cnVlOycnJwppZiBvbGQgbm90IGluIHM6IHJhaXNlIFN5c3RlbUV4aXQoJ01pc3NpbmcgREFUQSBURVNUIHBhdHRlcm4nKQpzID0gcy5yZXBsYWNlKG9sZCwgbmV3LCAxKQoKb2xkID0gJycnICAgIHByaXZhdGUgdm9pZCBtYXliZUZpbmlzaFRlc3QoKSB7XG4gICAgICAgIGlmICghdGVzdEFja09rIHx8ICF0ZXN0RGF0YVJlY2VpdmVkKSByZXR1cm47JycnCm5ldyA9ICcnJyAgICBwcml2YXRlIHZvaWQgbWF5YmVDb250aW51ZVN5bmNJbml0KCkge1xuICAgICAgICBpZiAoIXN5bmNJbml0QWNrT2sgfHwgIXN5bmNJbml0RGF0YVJlY2VpdmVkKSByZXR1cm47XG4gICAgICAgIGNvbW1hbmRHZW5lcmF0aW9uKys7XG4gICAgICAgIGxvZygiSU5JVCBjb21wbGV0IMOubiBhY2VlYciZaSBjb25leGl1bmU7IGNvbnRpbnVpIGN1IFRJTUUuIik7XG4gICAgICAgIGhhbmRsZXIucG9zdERlbGF5ZWQodGhpczo6c2VuZE5leHRDb21tYW5kLCAxMjApO1xuICAgIH1cblxuICAgIHByaXZhdGUgdm9pZCBtYXliZUZpbmlzaFRlc3QoKSB7XG4gICAgICAgIGlmICghdGVzdEFja09rIHx8ICF0ZXN0RGF0YVJlY2VpdmVkKSByZXR1cm47JycnCmlmIG9sZCBub3QgaW4gczogcmFpc2UgU3lzdGVtRXhpdCgnTWlzc2luZyBoZWxwZXIgcGF0dGVybicpCnMgPSBzLnJlcGxhY2Uob2xkLCBuZXcsIDEpCgpzID0gcy5yZXBsYWNlKCdUSU1FICsgU0FWRSArIEVYSVQgYXUgcHJpbWl0IEFDSy4gVmVyaWZpY8SDIGZpemljIGRhdGEgyJlpIG9yYS4nLAogICAgICAgICAgICAgICdJTklUICsgVElNRSArIFNBVkUgKyBFWElUIGF1IHByaW1pdCBBQ0suIFZlcmlmaWPEgyBmaXppYyBkYXRhIMiZaSBvcmEuJywgMSkKCnAud3JpdGVfdGV4dChzKQpwcmludCgnQXBwbGllZCB2OCBzYW1lLXNlc3Npb24gSU5JVCArIGV4YWN0LWN1cnJlbnQtdGltZSBwYXRjaCcpCg==' | base64 -d > /tmp/powerwatch_patch_v8.py
+          python3 /tmp/powerwatch_patch_v8.py
+          grep -n 'syncLabels.add("INIT")\|maybeContinueSyncInit\|pendingSerial = 0\|long utc' PowerWatchRescue-audited/app/src/main/java/org/openpowerwatch/sync/MainActivity.java
+
+      - name: Use preinstalled JDK and Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "${JAVA_HOME_17_X64:-}" ]; then
+            echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+            echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+          fi
+          java -version
+          SDKROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          SDKMANAGER="$(find "$SDKROOT/cmdline-tools" -type f -name sdkmanager 2>/dev/null | sort | tail -n 1)"
+          test -n "$SDKMANAGER"
+          echo "SDKMANAGER=$SDKMANAGER" >> "$GITHUB_ENV"
+
+      - name: Ensure Android 35 tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Download Gradle 8.7
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 https://services.gradle.org/distributions/gradle-8.7-bin.zip -o /tmp/gradle-8.7-bin.zip
+          rm -rf /tmp/gradle-8.7
+          unzip -q /tmp/gradle-8.7-bin.zip -d /tmp
+
+      - name: Build APK
+        shell: bash
+        working-directory: PowerWatchRescue-audited
+        run: |
+          set -euo pipefail
+          /tmp/gradle-8.7/bin/gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Publish APK to repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="PowerWatchRescue-audited/app/build/outputs/apk/debug/app-debug.apk"
+          test -f "$APK"
+          cp "$APK" PowerWatchRescue-debug.apk
+          sha256sum PowerWatchRescue-debug.apk > PowerWatchRescue-debug.apk.sha256
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add PowerWatchRescue-debug.apk PowerWatchRescue-debug.apk.sha256
+          if ! git diff --cached --quiet; then
+            git commit -m "Build PowerWatch Rescue APK v8"
+            git push
+          fi
