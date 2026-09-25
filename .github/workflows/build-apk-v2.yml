@@ -1,0 +1,89 @@
+name: Build PowerWatch Rescue APK v2
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'PowerWatchRescue*.zip'
+      - '.github/workflows/build-apk-v2.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Find and unpack source ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          ZIP="$(find . -maxdepth 1 -type f -iname 'PowerWatchRescue*.zip' | head -n 1)"
+          if [ -z "$ZIP" ]; then
+            echo "Nu am gasit ZIP-ul PowerWatchRescue*.zip"
+            exit 1
+          fi
+          echo "Folosesc: $ZIP"
+          rm -rf PowerWatchRescue-audited
+          unzip -q "$ZIP"
+          test -f PowerWatchRescue-audited/settings.gradle
+          test -f PowerWatchRescue-audited/app/build.gradle
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Verify Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          command -v sdkmanager
+          sdkmanager --version
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Setup Gradle 8.7
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Build APK
+        working-directory: PowerWatchRescue-audited
+        run: gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Prepare APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f PowerWatchRescue-audited/app/build/outputs/apk/debug/app-debug.apk
+          cp PowerWatchRescue-audited/app/build/outputs/apk/debug/app-debug.apk PowerWatchRescue-debug.apk
+          sha256sum PowerWatchRescue-debug.apk > PowerWatchRescue-debug.apk.sha256
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PowerWatchRescue-debug
+          path: |
+            PowerWatchRescue-debug.apk
+            PowerWatchRescue-debug.apk.sha256
+
+      - name: Put APK in repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add PowerWatchRescue-debug.apk PowerWatchRescue-debug.apk.sha256
+          if ! git diff --cached --quiet; then
+            git commit -m "Build PowerWatch Rescue APK"
+            git push
+          fi
