@@ -1,0 +1,10 @@
+.gradle/
+build/
+app/build/
+local.properties
+.tools/
+*.iml
+.DS_Store
+
+# Do not commit generated APKs unless intentionally publishing a release artifact
+*.apk
