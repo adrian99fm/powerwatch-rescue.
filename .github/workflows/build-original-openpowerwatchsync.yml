@@ -9,7 +9,7 @@ on:
       - '.github/workflows/build-original-openpowerwatchsync.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -40,13 +40,20 @@ jobs:
         working-directory: OpenPowerWatchSync
         run: gradle assembleDebug --no-daemon --stacktrace
 
-      - name: Prepare artifact
+      - name: Publish APK to repository
         shell: bash
         run: |
           cp OpenPowerWatchSync/app/build/outputs/apk/debug/app-debug.apk OpenPowerWatchSync-original-debug.apk
           sha256sum OpenPowerWatchSync-original-debug.apk > OpenPowerWatchSync-original-debug.apk.sha256
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add OpenPowerWatchSync-original-debug.apk OpenPowerWatchSync-original-debug.apk.sha256
+          if ! git diff --cached --quiet; then
+            git commit -m "Build original OpenPowerWatchSync APK"
+            git push
+          fi
 
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: OpenPowerWatchSync-original-debug
