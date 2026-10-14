@@ -1,0 +1,55 @@
+name: Build original OpenPowerWatchSync
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/build-original-openpowerwatchsync.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle 8.7
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Ensure Android SDK 35
+        shell: bash
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Build original source unchanged
+        working-directory: OpenPowerWatchSync
+        run: gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Prepare artifact
+        shell: bash
+        run: |
+          cp OpenPowerWatchSync/app/build/outputs/apk/debug/app-debug.apk OpenPowerWatchSync-original-debug.apk
+          sha256sum OpenPowerWatchSync-original-debug.apk > OpenPowerWatchSync-original-debug.apk.sha256
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenPowerWatchSync-original-debug
+          path: |
+            OpenPowerWatchSync-original-debug.apk
+            OpenPowerWatchSync-original-debug.apk.sha256
