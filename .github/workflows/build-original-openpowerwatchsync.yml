@@ -25,33 +25,29 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Gradle 8.7
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.7'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
-      - name: Ensure Android SDK 35
+      - name: Install Android SDK 35
         shell: bash
         run: |
           yes | sdkmanager --licenses >/dev/null || true
           sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
+      - name: Setup Gradle 8.7
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
       - name: Build original source unchanged
         working-directory: OpenPowerWatchSync
         run: gradle assembleDebug --no-daemon --stacktrace
 
-      - name: Publish APK to repository
+      - name: Prepare APK
         shell: bash
         run: |
           cp OpenPowerWatchSync/app/build/outputs/apk/debug/app-debug.apk OpenPowerWatchSync-original-debug.apk
           sha256sum OpenPowerWatchSync-original-debug.apk > OpenPowerWatchSync-original-debug.apk.sha256
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add OpenPowerWatchSync-original-debug.apk OpenPowerWatchSync-original-debug.apk.sha256
-          if ! git diff --cached --quiet; then
-            git commit -m "Build original OpenPowerWatchSync APK"
-            git push
-          fi
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -60,3 +56,14 @@ jobs:
           path: |
             OpenPowerWatchSync-original-debug.apk
             OpenPowerWatchSync-original-debug.apk.sha256
+
+      - name: Publish APK to repository
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f OpenPowerWatchSync-original-debug.apk OpenPowerWatchSync-original-debug.apk.sha256
+          if ! git diff --cached --quiet; then
+            git commit -m "Build original OpenPowerWatchSync APK"
+            git push
+          fi
